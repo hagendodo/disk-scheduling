@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CSCAN -DISK SCHEDULING</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      .form-container {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      label {
+        font-weight: bold;
+      }
+
+      input[type="text"] {
+        padding: 5px;
+        width: 300px;
+      }
+
+      button {
+        padding: 5px 10px;
+        background-color: #a8c26b;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #a8c26b;
+      }
+
+      .chart-container {
+        width: 600px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Disk Scheduling - CSCAN</h1>
+    <div class="form-container">
+      <label for="requests">Input Value (separate by " ") :</label>
+      <br />
+      <input type="text" id="requests" />
+      <br />
+      <button onclick="visualize()">Evaluate</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+      function CSCAN(arr, head) {
+        let seek_count = 0;
+        let distance, cur_track;
+        let left = [],
+          right = [];
+        let seek_sequence = [];
+
+        left.push(0);
+        right.push(200 - 1);
+
+        for (let i = 0; i < arr.length - 1; i++) {
+          if (arr[i] < head) left.push(arr[i]);
+          if (arr[i] > head) right.push(arr[i]);
+        }
+
+        left.sort(function (a, b) {
+          return a - b;
+        });
+        right.sort(function (a, b) {
+          return a - b;
+        });
+
+        for (let i = 0; i < right.length; i++) {
+          cur_track = right[i];
+
+          seek_sequence.push(cur_track);
+
+          distance = Math.abs(cur_track - head);
+
+          seek_count += distance;
+
+          head = cur_track;
+        }
+
+        head = 0;
+
+        seek_count += 200 - 1;
+
+        for (let i = 0; i < left.length; i++) {
+          cur_track = left[i];
+
+          seek_sequence.push(cur_track);
+
+          distance = Math.abs(cur_track - head);
+
+          seek_count += distance;
+
+          head = cur_track;
+        }
+
+        return seek_sequence;
+      }
+
+      function visualize() {
+        var input = document.getElementById("requests").value;
+        var requests = input.split(" ").map(Number);
+
+        const data = CSCAN(requests, 100);
+        const labels = Array.from({ length: data.length }, (_, i) =>
+          i.toString()
+        );
+
+        const ctx = document.getElementById("myChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "",
+                data: data,
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            scales: {
+              x: {
+                display: true,
+                title: {
+                  display: true,
+                  text: "",
+                },
+              },
+              y: {
+                display: true,
+                title: {
+                  display: true,
+                  text: "Time",
+                },
+              },
+            },
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

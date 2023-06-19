@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SCAN Disk Scheduling</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+        }
+        
+        .form-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        label {
+            font-weight: bold;
+        }
+        
+        input[type="text"] {
+            padding: 5px;
+            width: 300px;
+        }
+        
+        button {
+            padding: 5px 10px;
+            background-color: #a8c26b;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #a8c26b;
+        }
+        
+        .chart-container {
+            width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>SCAN Disk Scheduling</h1>
+    <div class="form-container">
+        <label for="requests">Input Value :</label>
+        <br />
+        <input type="text" id="requests" />
+        <br />
+        <button onclick="visualize()">Visualize</button>
+    </div>
+    <div class="chart-container">
+        <canvas id="chart"></canvas>
+    </div>
+
+    <script>
+        function schedule() {
+            var input = document.getElementById('requests').value;
+            var requests = input.split(' ').map(Number);
+
+            var headPosition = 50;
+            var seekTime = 0;
+            var seekSequence = [];
+            var direction = 'right';
+            var currentPosition = headPosition;
+
+            // Sortir permintaan disk dalam urutan menaik
+            requests.sort(function(a, b) {
+                return a - b;
+            });
+
+            // Temukan indeks di mana posisi kepala harus dimasukkan
+            var insertIndex = 0;
+            for (var i = 0; i < requests.length; i++) {
+                if (headPosition < requests[i]) {
+                    insertIndex = i;
+                    break;
+                }
+            }
+
+            <!-- Masukan formulir dan tombol -->
+            requests.splice(insertIndex, 0, headPosition);
+
+            // Lakukan algoritma SCAN
+            var index = requests.indexOf(headPosition);
+            for (var i = index; i >= 0; i--) {
+                seekSequence.push(currentPosition);
+                seekTime += Math.abs(requests[i] - currentPosition);
+                currentPosition = requests[i];
+            }
+
+            if (direction === 'right') {
+                seekSequence.push(currentPosition);
+                currentPosition = requests[requests.length - 1];
+                direction = 'left';
+            } else {
+                direction = 'right';
+            }
+
+            for (var i = index + 1; i < requests.length; i++) {
+                seekSequence.push(currentPosition);
+                seekTime += Math.abs(requests[i] - currentPosition);
+                currentPosition = requests[i];
+            }
+
+            var ctx = document.getElementById('chart').getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: seekSequence,
+                    datasets: [{
+                        label: 'Seek Time',
+                        data: seekSequence.map((_, index) => seekTime / (index + 1)),
+                        fill: false,
+                        borderColor: 'blue'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Disk'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'R/W Time'
+                            },
+                            suggestedMin: 0
+                        }
+                    }
+                }
+            });
+        }
+
+        function visualize() {
+            var input = document.getElementById('requests').value;
+            if (input !== '') {
+                schedule();
+            }
+        }
+    </script>
+</body>
+
+</html>
